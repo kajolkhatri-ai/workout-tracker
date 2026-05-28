@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Workouts"/>
+<meta name="theme-color" content="#0f0f0f"/>
+<title>Workout Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#0f0f0f;--surface:#1a1a1a;--surface2:#242424;--border:#2e2e2e;--accent:#c8f55a;--accent-dim:#c8f55a22;--text:#f0f0f0;--muted:#888;--danger:#ff5f5f;--radius:14px;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow:hidden;}
+body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;}
+.header{padding:52px 20px 12px;display:flex;align-items:flex-end;justify-content:space-between;background:var(--bg);flex-shrink:0;}
+.header-title{font-size:24px;font-weight:500;letter-spacing:-0.5px;}
+.header-date{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+.tabs{display:flex;gap:0;padding:0 20px 12px;flex-shrink:0;}
+.tab-btn{flex:1;padding:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;transition:all 0.2s;font-family:inherit;}
+.tab-btn:first-child{border-radius:10px 0 0 10px;border-right:none;}
+.tab-btn:nth-child(2){border-right:none;}
+.tab-btn:last-child{border-radius:0 10px 10px 0;}
+.tab-btn.active{background:var(--accent);color:#0f0f0f;border-color:var(--accent);font-weight:500;}
+.content{flex:1;overflow-y:auto;padding:0 20px 80px;-webkit-overflow-scrolling:touch;}
+.section{display:none;}.section.active{display:block;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;}
+.card-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;font-weight:500;}
+.act-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.act-chip{padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;cursor:pointer;text-align:left;transition:all 0.15s;font-family:inherit;}
+.act-chip.selected{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
+.tags-wrap{display:flex;flex-wrap:wrap;gap:6px;min-height:32px;margin-bottom:10px;}
+.tag{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:99px;background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);font-size:12px;}
+.tag-remove{background:none;border:none;color:var(--accent);cursor:pointer;font-size:16px;line-height:1;padding:0;}
+.tag-ph{font-size:13px;color:var(--muted);padding:4px 0;}
+.input-row{display:flex;gap:8px;}
+input[type=text],input[type=number],select,input[type=date],input[type=time],input[type=password]{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:11px 14px;font-size:14px;width:100%;outline:none;-webkit-appearance:none;font-family:inherit;}
+input:focus,select:focus{border-color:var(--accent);}
+select option{background:var(--surface2);}
+.plus-btn{width:44px;height:44px;border-radius:10px;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:24px;color:#0f0f0f;font-weight:300;line-height:1;}
+.sugg-wrap{position:relative;flex:1;}
+.suggestions{position:absolute;top:48px;left:0;right:0;background:var(--surface2);border:1px solid var(--border);border-radius:10px;z-index:20;overflow:hidden;display:none;}
+.sugg-item{padding:10px 14px;font-size:13px;cursor:pointer;color:var(--text);}
+.sugg-item:active{background:var(--surface);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.custom-row{display:flex;gap:8px;margin-top:8px;}
+.custom-row input{flex:1;}
+.add-btn{padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;white-space:nowrap;font-family:inherit;}
+.submit-btn{width:100%;padding:16px;border-radius:var(--radius);border:none;background:var(--accent);color:#0f0f0f;font-size:15px;font-weight:500;cursor:pointer;margin-top:4px;transition:opacity 0.2s;font-family:inherit;}
+.submit-btn:disabled{opacity:0.35;}
+.submit-btn:active{opacity:0.8;}
+.toast{position:fixed;bottom:24px;left:20px;right:20px;max-width:390px;margin:0 auto;padding:13px 16px;border-radius:12px;font-size:14px;z-index:100;display:none;text-align:center;font-weight:500;}
+.toast.success{background:#1a3a1a;color:#7ddd7d;border:1px solid #2a5a2a;display:block;}
+.toast.error{background:#3a1a1a;color:var(--danger);border:1px solid #5a2a2a;display:block;}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.cal-title{font-size:16px;font-weight:500;}
+.cal-arrow{width:36px;height:36px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.cal-grid-wrap{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-day-hdr{text-align:center;font-size:10px;color:var(--muted);padding:4px 0;text-transform:uppercase;}
+.cal-cell{min-height:52px;border-radius:8px;border:1px solid var(--border);padding:4px;background:var(--surface);}
+.cal-cell.empty{background:transparent;border-color:transparent;}
+.cal-cell.today{border-color:var(--accent);}
+.day-num{font-size:11px;color:var(--muted);margin-bottom:2px;}
+.cal-cell.today .day-num{color:var(--accent);}
+.w-dot{font-size:9px;padding:2px 4px;border-radius:4px;margin-bottom:2px;background:var(--accent-dim);color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cal-loading{text-align:center;color:var(--muted);font-size:13px;padding:2rem 0;}
+.time-row{display:flex;gap:8px;margin-top:10px;align-items:center;}
+.time-row input{flex:1;}
+.enable-btn{padding:11px 16px;border-radius:10px;background:var(--accent);border:none;color:#0f0f0f;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:inherit;}
+.inst-box{background:var(--surface2);border-radius:10px;padding:14px;font-size:13px;line-height:1.9;color:var(--text);margin-top:8px;}
+.inst-label{color:var(--accent);font-size:10px;letter-spacing:1px;text-transform:uppercase;font-weight:600;display:block;margin-bottom:4px;}
+/* Setup screen */
+#setup-screen{position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;flex-direction:column;justify-content:center;padding:32px 24px;max-width:430px;margin:0 auto;}
+.setup-title{font-size:22px;font-weight:500;margin-bottom:8px;letter-spacing:-0.3px;}
+.setup-sub{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:28px;}
+.setup-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.setup-input-wrap{position:relative;margin-bottom:12px;}
+.setup-input-wrap input{padding-right:48px;}
+.toggle-vis{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0;}
+.setup-btn{width:100%;padding:15px;border-radius:var(--radius);border:none;background:var(--accent);color:#0f0f0f;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:4px;}
+.setup-hint{font-size:12px;color:var(--muted);margin-top:16px;line-height:1.6;text-align:center;}
+.setup-hint a{color:var(--accent);}
+.setup-error{font-size:13px;color:var(--danger);margin-bottom:12px;display:none;}
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN (shown if no token saved) -->
+<div id="setup-screen">
+  <div style="font-size:36px;margin-bottom:16px">💪</div>
+  <div class="setup-title">Workout Tracker</div>
+  <div class="setup-sub">Enter your Airtable credentials to get started. These are saved privately on your device only — never shared.</div>
+
+  <div class="setup-label">Airtable Personal Access Token</div>
+  <div class="setup-input-wrap">
+    <input type="password" id="setup-token" placeholder="patXXXXXX..."/>
+    <button class="toggle-vis" onclick="toggleVis('setup-token', this)">show</button>
+  </div>
+
+  <div class="setup-label">Base ID</div>
+  <div class="setup-input-wrap">
+    <input type="text" id="setup-base" placeholder="appXXXXXXXX"/>
+  </div>
+
+  <div class="setup-label">Table ID</div>
+  <div class="setup-input-wrap">
+    <input type="text" id="setup-table" placeholder="tblXXXXXXXX"/>
+  </div>
+
+  <div class="setup-error" id="setup-error"></div>
+  <button class="setup-btn" id="setup-btn" onclick="saveSetup()">Connect to Airtable →</button>
+
+  <div class="setup-hint">
+    Find your Base ID and Table ID in your Airtable URL:<br/>
+    airtable.com/<b>appXXXX</b>/<b>tblXXXX</b>/...
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="main-app" style="display:none;flex-direction:column;height:100%;">
+  <div class="header">
+    <div>
+      <div class="header-title">Workouts 💪</div>
+      <div class="header-date" id="header-date"></div>
+    </div>
+    <button onclick="showSetup()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px;" title="Settings">⚙</button>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('log',this)">Log</button>
+    <button class="tab-btn" onclick="switchTab('calendar',this)">Calendar</button>
+    <button class="tab-btn" onclick="switchTab('remind',this)">Remind</button>
+  </div>
+  <div class="content">
+
+    <!-- LOG -->
+    <div id="tab-log" class="section active">
+      <div class="card">
+        <div class="card-label">Main activity</div>
+        <div class="act-grid" id="act-grid">
+          <button class="act-chip" onclick="selAct(this,'Trampoline')">🤸 Trampoline</button>
+          <button class="act-chip" onclick="selAct(this,'Leg day lift')">🦵 Leg day lift</button>
+          <button class="act-chip" onclick="selAct(this,'Quad day')">🏋️ Quad day</button>
+          <button class="act-chip" onclick="selAct(this,'Glute day')">🍑 Glute day</button>
+          <button class="act-chip" onclick="selAct(this,'Run')">🏃 Run</button>
+          <button class="act-chip" onclick="selAct(this,'Stair master')">🪜 Stair master</button>
+          <button class="act-chip" onclick="selAct(this,'Upper body')">💪 Upper body</button>
+          <button class="act-chip" onclick="selAct(this,'Back')">🔙 Back</button>
+          <button class="act-chip" onclick="selAct(this,'Arms')">💪 Arms</button>
+          <button class="act-chip" onclick="selAct(this,'Core')">⭕ Core</button>
+          <button class="act-chip" onclick="selAct(this,'Yoga')">🧘 Yoga</button>
+          <button class="act-chip" onclick="selAct(this,'Walk')">🚶 Walk</button>
+          <button class="act-chip" onclick="selAct(this,'Tennis')">🎾 Tennis</button>
+        </div>
+        <div class="custom-row">
+          <input type="text" id="custom-main" placeholder="Other activity..."/>
+          <button class="add-btn" onclick="addCustomMain()">+ Add</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Activities done</div>
+        <div class="tags-wrap" id="tags-wrap">
+          <span class="tag-ph" id="tag-ph">Tap + to add exercises, sets, notes...</span>
+        </div>
+        <div class="input-row">
+          <div class="sugg-wrap">
+            <input type="text" id="act-input" placeholder="e.g. 3×10 squats..." onkeydown="if(event.key==='Enter')addAct()" oninput="showSugg()" onblur="setTimeout(hideSugg,160)"/>
+            <div class="suggestions" id="suggestions"></div>
+          </div>
+          <button class="plus-btn" onclick="addAct()">+</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Duration</div>
+        <div class="row2">
+          <input type="number" id="duration" placeholder="45" min="1"/>
+          <select id="dur-unit"><option>minutes</option><option>hours</option></select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Date</div>
+        <input type="date" id="workout-date"/>
+      </div>
+      <button class="submit-btn" id="submit-btn" onclick="submitWorkout()">Save workout →</button>
+    </div>
+
+    <!-- CALENDAR -->
+    <div id="tab-calendar" class="section">
+      <div class="cal-nav">
+        <button class="cal-arrow" onclick="changeMonth(-1)">‹</button>
+        <span class="cal-title" id="cal-label"></span>
+        <button class="cal-arrow" onclick="changeMonth(1)">›</button>
+      </div>
+      <div class="cal-grid-wrap" id="cal-hdr"></div>
+      <div style="height:6px"></div>
+      <div class="cal-grid-wrap" id="cal-grid"></div>
+      <p class="cal-loading" id="cal-loading"></p>
+    </div>
+
+    <!-- REMIND -->
+    <div id="tab-remind" class="section">
+      <div class="card">
+        <div class="card-label">Daily reminder</div>
+        <p style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:14px">Get a notification every day to log your workout. Keep this page open once to activate it.</p>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:10px" id="remind-status"></div>
+        <div class="time-row">
+          <input type="time" id="remind-time" value="09:00"/>
+          <button class="enable-btn" onclick="enableReminder()">Enable</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Add to home screen</div>
+        <p style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:8px">Open your GitHub Pages link in Safari or Chrome on your phone and add it like an app.</p>
+        <div class="inst-box">
+          <span class="inst-label">iPhone — Safari</span>
+          1. Open your link in Safari<br/>
+          2. Tap the Share button ⬆<br/>
+          3. Tap "Add to Home Screen"<br/>
+          4. Tap Add ✓
+        </div>
+        <div class="inst-box">
+          <span class="inst-label">Android — Chrome</span>
+          1. Open your link in Chrome<br/>
+          2. Tap ⋮ menu → "Add to Home screen"<br/>
+          3. Tap Add ✓
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── credentials stored in localStorage only ──
+function getCreds(){
+  return {
+    token: localStorage.getItem('at_token')||'',
+    base:  localStorage.getItem('at_base')||'',
+    table: localStorage.getItem('at_table')||''
+  };
+}
+
+function toggleVis(id, btn){
+  const inp = document.getElementById(id);
+  if(inp.type==='password'){inp.type='text';btn.textContent='hide';}
+  else{inp.type='password';btn.textContent='show';}
+}
+
+async function saveSetup(){
+  const token = document.getElementById('setup-token').value.trim();
+  const base  = document.getElementById('setup-base').value.trim();
+  const table = document.getElementById('setup-table').value.trim();
+  const err   = document.getElementById('setup-error');
+  const btn   = document.getElementById('setup-btn');
+  if(!token||!base||!table){err.textContent='Please fill in all three fields.';err.style.display='block';return;}
+  btn.textContent='Checking...';btn.disabled=true;
+  try{
+    const r = await fetch(`https://api.airtable.com/v0/${base}/${table}?maxRecords=1`,{headers:{'Authorization':'Bearer '+token}});
+    if(r.status===401||r.status===403){throw new Error('Invalid token or no access to this base.');}
+    if(r.status===404){throw new Error('Base ID or Table ID not found.');}
+    localStorage.setItem('at_token',token);
+    localStorage.setItem('at_base',base);
+    localStorage.setItem('at_table',table);
+    err.style.display='none';
+    launchApp();
+  }catch(e){
+    err.textContent=e.message||'Could not connect. Check your credentials.';
+    err.style.display='block';
+  }
+  btn.textContent='Connect to Airtable →';btn.disabled=false;
+}
+
+function showSetup(){
+  const c=getCreds();
+  document.getElementById('setup-token').value=c.token;
+  document.getElementById('setup-base').value=c.base;
+  document.getElementById('setup-table').value=c.table;
+  document.getElementById('setup-screen').style.display='flex';
+  document.getElementById('main-app').style.display='none';
+}
+
+function launchApp(){
+  document.getElementById('setup-screen').style.display='none';
+  const app=document.getElementById('main-app');
+  app.style.display='flex';
+  initApp();
+}
+
+// ── app logic ──
+let selActivity='',actsDone=[],calYear,calMonth,wByDate={};
+const TODAY=new Date();
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const SUGG=['Squats','Deadlifts','Bench press','Pull-ups','Push-ups','Lunges','Hip thrusts','Romanian deadlift','Leg press','Calf raises','Lat pulldown','Shoulder press','Bicep curls','Tricep dips','Plank','Crunches','Mountain climbers','Box jumps','Burpees','Jump rope','Cycling','Rowing','Stretching','Foam rolling'];
+
+function initApp(){
+  calYear=TODAY.getFullYear();calMonth=TODAY.getMonth();
+  document.getElementById('workout-date').value=TODAY.toISOString().split('T')[0];
+  document.getElementById('header-date').textContent=TODAY.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+}
+
+function switchTab(t,el){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-'+t).classList.add('active');
+  if(t==='calendar')loadCal();
+  if(t==='remind')updateStatus();
+}
+
+function selAct(btn,name){
+  document.querySelectorAll('.act-chip').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');selActivity=name;
+}
+
+function addCustomMain(){
+  const v=document.getElementById('custom-main').value.trim();if(!v)return;
+  const g=document.getElementById('act-grid');
+  const b=document.createElement('button');b.className='act-chip';
+  b.textContent='✏️ '+v;b.onclick=()=>selAct(b,v);
+  g.appendChild(b);document.getElementById('custom-main').value='';selAct(b,v);
+}
+
+function renderTags(){
+  const w=document.getElementById('tags-wrap');
+  w.querySelectorAll('.tag').forEach(t=>t.remove());
+  document.getElementById('tag-ph').style.display=actsDone.length?'none':'';
+  actsDone.forEach((a,i)=>{
+    const t=document.createElement('span');t.className='tag';
+    t.innerHTML=a+'<button class="tag-remove" onclick="rmTag('+i+')">×</button>';
+    w.appendChild(t);
+  });
+}
+function rmTag(i){actsDone.splice(i,1);renderTags();}
+
+function addAct(){
+  const inp=document.getElementById('act-input');
+  const v=inp.value.trim();if(!v)return;
+  actsDone.push(v);inp.value='';hideSugg();renderTags();
+}
+
+function showSugg(){
+  const v=document.getElementById('act-input').value.trim().toLowerCase();
+  if(!v){hideSugg();return;}
+  const m=SUGG.filter(s=>s.toLowerCase().includes(v)).slice(0,4);
+  const box=document.getElementById('suggestions');
+  if(!m.length){hideSugg();return;}
+  box.innerHTML=m.map(s=>`<div class="sugg-item" onmousedown="pickSugg('${s}')">${s}</div>`).join('');
+  box.style.display='block';
+}
+function pickSugg(v){document.getElementById('act-input').value=v;hideSugg();addAct();}
+function hideSugg(){document.getElementById('suggestions').style.display='none';}
+
+function toast(msg,type){
+  const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type;
+  setTimeout(()=>{t.className='toast';},3500);
+}
+
+async function ensureFields(){
+  const{token,base,table}=getCreds();
+  try{
+    const r=await fetch(`https://api.airtable.com/v0/meta/bases/${base}/tables`,{headers:{'Authorization':'Bearer '+token}});
+    const d=await r.json();
+    const tbl=d.tables&&d.tables.find(t=>t.id===table);if(!tbl)return;
+    const ex=tbl.fields.map(f=>f.name);
+    for(const f of[{name:'Activity',type:'singleLineText'},{name:'Activities Done',type:'multilineText'},{name:'Duration',type:'singleLineText'},{name:'Date',type:'date',options:{dateFormat:{name:'iso'}}}]){
+      if(!ex.includes(f.name))await fetch(`https://api.airtable.com/v0/meta/bases/${base}/tables/${table}/fields`,{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(f)});
+    }
+  }catch(e){}
+}
+
+async function submitWorkout(){
+  if(!selActivity){toast('Pick a main activity first','error');return;}
+  const dur=document.getElementById('duration').value;
+  if(!dur){toast('Enter a duration','error');return;}
+  const{token,base,table}=getCreds();
+  const date=document.getElementById('workout-date').value;
+  const unit=document.getElementById('dur-unit').value;
+  const btn=document.getElementById('submit-btn');
+  btn.disabled=true;btn.textContent='Saving...';
+  try{
+    await ensureFields();
+    const res=await fetch(`https://api.airtable.com/v0/${base}/${table}`,{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({fields:{Name:selActivity,Activity:selActivity,'Activities Done':actsDone.join('\n'),Duration:dur+' '+unit,Date:date}})});
+    if(res.ok){
+      toast('Workout saved! 💪','success');
+      document.querySelectorAll('.act-chip').forEach(b=>b.classList.remove('selected'));
+      selActivity='';actsDone=[];renderTags();
+      document.getElementById('duration').value='';
+      document.getElementById('workout-date').value=TODAY.toISOString().split('T')[0];
+    }else{const e=await res.json();toast('Error: '+(e.error&&e.error.message||'try again'),'error');}
+  }catch(e){toast('Network error','error');}
+  btn.disabled=false;btn.textContent='Save workout →';
+}
+
+async function loadCal(){
+  document.getElementById('cal-loading').textContent='Loading...';
+  wByDate={};
+  const{token,base,table}=getCreds();
+  try{
+    let off='';
+    do{
+      const url=`https://api.airtable.com/v0/${base}/${table}?fields[]=Date&fields[]=Activity&fields[]=Name${off?'&offset='+off:''}`;
+      const r=await fetch(url,{headers:{'Authorization':'Bearer '+token}});
+      const d=await r.json();
+      (d.records||[]).forEach(rec=>{const dt=rec.fields.Date,nm=rec.fields.Activity||rec.fields.Name||'Workout';if(dt){if(!wByDate[dt])wByDate[dt]=[];wByDate[dt].push(nm);}});
+      off=d.offset||'';
+    }while(off);
+  }catch(e){}
+  document.getElementById('cal-loading').textContent='';
+  drawCal();
+}
+
+function drawCal(){
+  document.getElementById('cal-label').textContent=MONTHS[calMonth]+' '+calYear;
+  document.getElementById('cal-hdr').innerHTML=DAYS.map(d=>`<div class="cal-day-hdr">${d}</div>`).join('');
+  const g=document.getElementById('cal-grid');g.innerHTML='';
+  const first=new Date(calYear,calMonth,1).getDay();
+  const dim=new Date(calYear,calMonth+1,0).getDate();
+  const todayStr=TODAY.toISOString().split('T')[0];
+  for(let i=0;i<first;i++)g.innerHTML+=`<div class="cal-cell empty"></div>`;
+  for(let d=1;d<=dim;d++){
+    const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isT=ds===todayStr,w=wByDate[ds]||[];
+    const dots=w.slice(0,2).map(n=>`<div class="w-dot">${n}</div>`).join('');
+    const more=w.length>2?`<div style="font-size:9px;color:#888">+${w.length-2}</div>`:'';
+    g.innerHTML+=`<div class="cal-cell${isT?' today':''}"><div class="day-num">${d}</div>${dots}${more}</div>`;
+  }
+}
+
+function changeMonth(d){calMonth+=d;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}loadCal();}
+
+function updateStatus(){
+  const el=document.getElementById('remind-status');
+  const saved=localStorage.getItem('reminderTime');
+  if(typeof Notification!=='undefined'&&Notification.permission==='granted'&&saved){el.textContent='✓ Reminder set for '+saved;el.style.color='#c8f55a';}
+  else if(typeof Notification!=='undefined'&&Notification.permission==='denied'){el.textContent='⚠ Notifications blocked in settings';el.style.color='#ff5f5f';}
+  else{el.textContent='Not set yet';el.style.color='#888';}
+}
+
+async function enableReminder(){
+  const t=document.getElementById('remind-time').value;
+  if(typeof Notification==='undefined'){toast('Notifications not supported here','error');return;}
+  const perm=await Notification.requestPermission();
+  if(perm!=='granted'){toast('Blocked — enable in phone settings','error');return;}
+  localStorage.setItem('reminderTime',t);scheduleReminder(t);updateStatus();
+  toast('Reminder set for '+t+' daily ✓','success');
+}
+
+function scheduleReminder(ts){
+  const[h,m]=ts.split(':').map(Number);
+  function tick(){
+    const now=new Date(),next=new Date();next.setHours(h,m,0,0);
+    if(next<=now)next.setDate(next.getDate()+1);
+    setTimeout(()=>{new Notification('Time to log your workout! 💪',{body:'Tap to open your tracker'});scheduleReminder(ts);},next-now);
+  }
+  tick();
+}
+
+// ── boot ──
+const c=getCreds();
+if(c.token&&c.base&&c.table){launchApp();}
+else{document.getElementById('setup-screen').style.display='flex';}
+
+const savedTime=localStorage.getItem('reminderTime');
+if(savedTime&&typeof Notification!=='undefined'&&Notification.permission==='granted')scheduleReminder(savedTime);
+</script>
+</body>
+</html>
