@@ -383,7 +383,7 @@ async function submitWorkout(){
   btn.disabled=true;btn.textContent='Saving...';
   try{
     await ensureFields();
-    const res=await fetch(`https://api.airtable.com/v0/${base}/${table}`,{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({fields:{Name:selActivity,Activity:selActivity,'Activities Done':actsDone.join('\n'),Duration:dur+' '+unit,Date:date}})});
+    const res=await fetch(`https://api.airtable.com/v0/${base}/${table}`,{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({fields:{Activity:selActivity,'Activities Done':actsDone.join('\n'),Duration:dur+' '+unit,Date:date}})});
     if(res.ok){
       toast('Workout saved! 💪','success');
       document.querySelectorAll('.act-chip').forEach(b=>b.classList.remove('selected'));
